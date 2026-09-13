@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TubeGratis — Descargar y reproducir YouTube gratis</title>
+<meta name="description" content="Pega el link de YouTube, reprodúcelo y descárgalo gratis en MP4 / MP3. 100% gratis, sin registro." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">▶</span><div><h1>TubeGratis</h1><p>Descarga y reproduce YouTube gratis</p></div></div>
+  <a class="btn ghost" href="index.html">← NiHao Lab</a>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <h2>1️⃣ Pega el link</h2>
+    <div class="row">
+      <input id="url" placeholder="https://www.youtube.com/watch?v=...  o  https://youtu.be/..." autocomplete="off" spellcheck="false" />
+      <button class="btn primary" id="btn-cargar">Cargar ▶</button>
+    </div>
+    <div class="row small">
+      <button class="btn ghost sm" onclick="pegarPortapapeles()">📋 Pegar</button>
+      <button class="btn ghost sm" onclick="probarDemo()">🎬 Probar con demo</button>
+      <span class="hint" id="video-id-hint"></span>
+    </div>
+    <p class="legal">⚖️ Descarga solo videos propios, con licencia Creative Commons o con permiso del autor. Respetar los Términos de YouTube es tu responsabilidad.</p>
+  </section>
+
+  <section class="card hidden" id="preview-card">
+    <h2>2️⃣ Reproducir</h2>
+    <div class="player-grid">
+      <div>
+        <div class="thumb-wrap"><img id="thumb" alt="miniatura" /><div class="thumb-title" id="vtitle">—</div></div>
+        <div class="tabs">
+          <button class="tab active" data-tab="yt" onclick="switchTab('yt')">▶ YouTube</button>
+          <button class="tab" data-tab="file" onclick="switchTab('file')">📁 Archivo descargado</button>
+        </div>
+        <div id="tab-yt"><div class="frame-wrap"><iframe id="ytframe" src="" title="YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div>
+        <div id="tab-file" class="hidden"><video id="fileplayer" controls playsinline></video><p class="hint">Aquí se reproduce el MP4/MP3 obtenido por Cobalt o el archivo que abras abajo.</p><input type="file" id="openfile" accept="video/*,audio/*" onchange="abrirLocal(this)" /></div>
+      </div>
+      <div class="meta">
+        <div><b>ID:</b> <code id="vid">—</code></div>
+        <div class="row small"><button class="btn ghost sm" onclick="copiarLink()">🔗 Copiar link</button><button class="btn ghost sm" onclick="abrirEnYT()">↗ Abrir en YouTube</button></div>
+        <h3>⬇ Descarga directa (vía Cobalt API)</h3>
+        <label>Calidad <select id="quality"><option value="1080">1080p</option><option value="720" selected>720p</option><option value="480">480p</option><option value="360">360p</option><option value="max">Máxima</option></select></label>
+        <label>Formato <select id="format"><option value="mp4">MP4 video</option><option value="mp3">MP3 solo audio</option></select></label>
+        <label title="Tu instancia privada. La pública cobalt.tools está bloqueada para YouTube desde 2025.">API Cobalt <input id="apiurl" placeholder="https://tu-instancia... (vacío = probar pública)" /></label>
+        <div class="row"><button class="btn primary" id="btn-descargar" onclick="descargarCobalt()">⬇ Descargar gratis</button></div>
+        <div id="dl-status" class="status"></div>
+        <div id="dl-link" class="dl-link"></div>
+        <h3>💻 Método 100% fiable (yt-dlp, gratis)</h3>
+        <p class="hint">Funciona siempre desde tu PC porque usa tu internet (las webs públicas las bloquea YouTube). El repo usado: <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp/yt-dlp</a> (180k ⭐) y <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener">imputnet/cobalt</a>.</p>
+        <div class="row small"><button class="btn sm" onclick="copiarComando('mp4')">📄 Copiar comando MP4</button><button class="btn sm" onclick="copiarComando('mp3')">🎵 Copiar comando MP3</button></div>
+        <code class="cmd" id="cmd-preview">yt-dlp.exe "URL" -o "%(title)s.%(ext)s"</code>
+        <p class="hint">En Windows: descarga <b>yt-local/descargar.bat</b> de este proyecto, doble clic, pega el link y listo. <a href="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" target="_blank" rel="noopener">Descargar yt-dlp.exe</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🕘 Historial</h2>
+    <div id="historial" class="hist"></div>
+    <button class="btn ghost sm" onclick="limpiarHist()">🗑 Limpiar</button>
+  </section>
+
+  <section class="card">
+    <h2>❓ ¿Por qué a veces falla la descarga online?</h2>
+    <ol class="faq">
+      <li><b>YouTube bloquea las IPs de centros de datos</b> (Vercel, Railway, cobalt.tools). Por eso la instancia pública de Cobalt no descarga YouTube desde 2025.</li>
+      <li><b>Tu casa sí funciona:</b> yt-dlp desde tu PC o Cobalt auto-hospedado en tu red usan IP residencial y sí descargan.</li>
+      <li><b>Reproducir siempre funciona:</b> el reproductor de arriba es un embed oficial de YouTube, no viola nada.</li>
+    </ol>
+    <h3>🚀 Subir tu Cobalt propio (2 min, gratis)</h3>
+    <code class="cmd">docker run --init -p 9000:9000 -e API_URL="http://TU-IP:9000" ghcr.io/imputnet/cobalt:11</code>
+    <p class="hint">Luego pega <code>http://TU-IP:9000</code> en el campo "API Cobalt" y descarga sin límites. Guía: <a href="https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md" target="_blank" rel="noopener">run-an-instance.md</a></p>
+  </section>
+</main>
+
+<footer>TubeGratis · gratis y sin registro · <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> + <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener">cobalt</a> · Solo contenido libre / propio</footer>
+<script src="app.js"></script>
+</body>
+</html>
