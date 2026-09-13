@@ -1,7 +1,22 @@
 // TubeGratis — pegar, reproducir (embed oficial) y descargar vía Cobalt o yt-dlp
 const $ = id => document.getElementById(id);
 const PUBLIC_COBALT = ['https://cobalt.meowing.de', 'https://api.cobalt.tools'];
-let currentId = null, currentUrl = '';
+const LOCAL = 'http://localhost:8765'; // servidor.py (uso personal)
+let currentId = null, currentUrl = '', servidorOK = false, tieneFFmpeg = false;
+
+async function chequearServidor() {
+  try {
+    const r = await fetch(LOCAL + '/api/ping');
+    const j = await r.json();
+    servidorOK = !!j.ok; tieneFFmpeg = !!j.ffmpeg;
+    $('srv-badge').textContent = servidorOK
+      ? '✅ Servidor local conectado: pega el URL y descarga directo desde aquí' + (tieneFFmpeg ? '' : ' (MP3 necesita ffmpeg: usa MP4)')
+      : '⚠️ Sin servidor local: inicia yt-local/servidor.py para descarga directa, o usa Cobalt/yt-dlp abajo';
+  } catch {
+    servidorOK = false;
+    $('srv-badge').textContent = '⚠️ Sin servidor local: ejecuta "python yt-local/servidor.py" para descargar directo desde aquí';
+  }
+}
 
 function extraerID(url) {
   if (!url) return null;
@@ -43,12 +58,19 @@ async function cargar() {
   $('ytframe').src = 'https://www.youtube-nocookie.com/embed/' + id + '?rel=0';
   $('vtitle').textContent = 'Cargando título…';
   $('cmd-preview').textContent = 'yt-dlp.exe "' + currentUrl + '" -o "%(title)s.%(ext)s"';
-  // Título gratis sin API key (noembed + oembed de youtube)
+  // Título: primero servidor local (más completo), si no noembed gratis
   try {
-    const r = await fetch('https://noembed.com/embed?url=' + encodeURIComponent(currentUrl));
-    const j = await r.json();
-    $('vtitle').textContent = j.title || ('Video ' + id);
-    $('vtitle').textContent += j.author_name ? ' — ' + j.author_name : '';
+    if (servidorOK) {
+      const r = await fetch(LOCAL + '/api/info?url=' + encodeURIComponent(currentUrl));
+      const j = await r.json();
+      if (j.title) { $('vtitle').textContent = j.title + (j.channel ? ' — ' + j.channel : ''); }
+      else throw 0;
+    } else {
+      const r = await fetch('https://noembed.com/embed?url=' + encodeURIComponent(currentUrl));
+      const j = await r.json();
+      $('vtitle').textContent = j.title || ('Video ' + id);
+      $('vtitle').textContent += j.author_name ? ' — ' + j.author_name : '';
+    }
   } catch { $('vtitle').textContent = 'Video ' + id; }
   guardarHist(id);
   document.getElementById('preview-card').scrollIntoView({ behavior: 'smooth' });
@@ -62,6 +84,32 @@ function copiarComando(tipo) {
   navigator.clipboard.writeText(cmd);
   $('cmd-preview').textContent = cmd;
   alert('✅ Comando copiado. Pégalo en cmd/PowerShell (con yt-dlp.exe en la misma carpeta).');
+}
+
+// Botón principal: pega el URL y descarga desde aquí.
+// 1) servidor local (siempre funciona, tu internet)  2) Cobalt online
+async function descargar() {
+  if (!currentUrl) { alert('Pega un link primero'); return; }
+  const st = $('dl-status'), box = $('dl-link');
+  const quality = $('quality').value, format = $('format').value;
+  box.innerHTML = '';
+  if (servidorOK) {
+    if (format === 'mp3' && !tieneFFmpeg) {
+      st.textContent = '⚠️ MP3 necesita ffmpeg instalado. Descargando MP4 mientras tanto…';
+    } else {
+      st.textContent = '⏳ Descargando con tu servidor local… (segunda vez es instantáneo: queda en caché)';
+      const fmt = format === 'mp3' ? 'mp3' : (quality === 'max' ? 'max' : '720');
+      const link = document.createElement('a');
+      link.href = LOCAL + '/api/download?url=' + encodeURIComponent(currentUrl) + '&fmt=' + fmt;
+      link.textContent = '⬇ Descargar ' + (format === 'mp3' ? 'MP3' : 'MP4') + ' ahora';
+      link.download = '';
+      box.appendChild(link);
+      link.click(); // descarga directa desde la app
+      st.textContent = '✅ Descarga iniciada desde tu servidor local. Revisa tu carpeta de descargas.';
+      return;
+    }
+  }
+  return descargarCobalt();
 }
 
 async function descargarCobalt() {
@@ -134,3 +182,4 @@ function limpiarHist() { localStorage.removeItem('tg_hist'); pintarHist(); }
 $('btn-cargar').onclick = cargar;
 $('url').addEventListener('keydown', e => { if (e.key === 'Enter') cargar(); });
 pintarHist();
+chequearServidor();

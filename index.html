@@ -43,11 +43,12 @@
       <div class="meta">
         <div><b>ID:</b> <code id="vid">—</code></div>
         <div class="row small"><button class="btn ghost sm" onclick="copiarLink()">🔗 Copiar link</button><button class="btn ghost sm" onclick="abrirEnYT()">↗ Abrir en YouTube</button></div>
-        <h3>⬇ Descarga directa (vía Cobalt API)</h3>
+        <h3>⬇ Descargar desde aquí</h3>
+        <div id="srv-badge" class="status">🔍 Buscando servidor local…</div>
         <label>Calidad <select id="quality"><option value="1080">1080p</option><option value="720" selected>720p</option><option value="480">480p</option><option value="360">360p</option><option value="max">Máxima</option></select></label>
         <label>Formato <select id="format"><option value="mp4">MP4 video</option><option value="mp3">MP3 solo audio</option></select></label>
         <label title="Tu instancia privada. La pública cobalt.tools está bloqueada para YouTube desde 2025.">API Cobalt <input id="apiurl" placeholder="https://tu-instancia... (vacío = probar pública)" /></label>
-        <div class="row"><button class="btn primary" id="btn-descargar" onclick="descargarCobalt()">⬇ Descargar gratis</button></div>
+        <div class="row"><button class="btn primary" id="btn-descargar" onclick="descargar()">⬇ Descargar gratis</button></div>
         <div id="dl-status" class="status"></div>
         <div id="dl-link" class="dl-link"></div>
         <h3>💻 Método 100% fiable (yt-dlp, gratis)</h3>
