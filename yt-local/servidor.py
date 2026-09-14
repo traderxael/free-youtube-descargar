@@ -166,8 +166,14 @@ class H(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), H)
-    print(f"TubeGratis listo -> http://localhost:{PORT}")
+    import socket
+    try:  # IP local para abrir la app desde el celular (mismo WiFi)
+        lan = socket.gethostbyname(socket.gethostname())
+    except Exception:
+        lan = "TU-IP"
+    srv = http.server.ThreadingHTTPServer(("0.0.0.0", PORT), H)
+    print(f"TubeGratis listo -> http://localhost:{PORT}  (en esta PC)")
+    print(f"En el celular (mismo WiFi) -> http://{lan}:{PORT}")
     print("Pega el URL en la app y descarga desde ahi. Ctrl+C para salir.")
     try:
         srv.serve_forever()

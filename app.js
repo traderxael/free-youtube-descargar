@@ -1,7 +1,11 @@
 // TubeGratis — pegar, reproducir (embed oficial) y descargar vía Cobalt o yt-dlp
 const $ = id => document.getElementById(id);
 const PUBLIC_COBALT = ['https://cobalt.meowing.de', 'https://api.cobalt.tools'];
-const LOCAL = 'http://localhost:8765'; // servidor.py (uso personal)
+// Si la app se abre desde el servidor (PC o celu por WiFi) se usa ese mismo
+// origen; si se abre como archivo local, se prueba localhost.
+const LOCAL = (window.location.port === '8765')
+  ? window.location.origin
+  : 'http://localhost:8765'; // servidor.py (uso personal)
 let currentId = null, currentUrl = '', servidorOK = false, tieneFFmpeg = false;
 
 async function chequearServidor() {
