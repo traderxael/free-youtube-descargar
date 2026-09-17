@@ -9,16 +9,19 @@ const LOCAL = (window.location.port === '8765')
 let currentId = null, currentUrl = '', servidorOK = false, tieneFFmpeg = false;
 
 async function chequearServidor() {
+  const b = $('srv-badge');
   try {
     const r = await fetch(LOCAL + '/api/ping');
     const j = await r.json();
     servidorOK = !!j.ok; tieneFFmpeg = !!j.ffmpeg;
-    $('srv-badge').textContent = servidorOK
+    b.textContent = servidorOK
       ? '✅ Servidor local conectado: pega el URL y descarga directo desde aquí' + (tieneFFmpeg ? '' : ' (MP3 necesita ffmpeg: usa MP4)')
       : '⚠️ Sin servidor local: inicia yt-local/servidor.py para descarga directa, o usa Cobalt/yt-dlp abajo';
+    b.classList.add(servidorOK ? 'ok' : 'warn');
   } catch {
     servidorOK = false;
-    $('srv-badge').textContent = '⚠️ Sin servidor local: ejecuta "python yt-local/servidor.py" para descargar directo desde aquí';
+    b.textContent = '⚠️ Sin servidor local: ejecuta "python yt-local/servidor.py" para descargar directo desde aquí';
+    b.classList.add('warn');
   }
 }
 
