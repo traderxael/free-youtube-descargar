@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    name: Tests del servidor local
+    name: Tests (parser + servidor)
     runs-on: ubuntu-latest
 
     steps:
@@ -22,16 +22,38 @@ jobs:
         with:
           python-version: "3.11"
 
-      # servidor.py solo usa la libreria estandar, asi que esto corre sin instalar nada.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # --- Servidor local (solo libreria estandar) ---
       - name: Test del handler _servir_archivo (Range / 206 / 416)
         run: python yt-local/test_servidor.py
 
       - name: Verificar sintaxis del servidor
         run: python -m py_compile yt-local/servidor.py
 
-      - name: Nota sobre test_parser.js
+      # --- Parser de URLs ---
+      # El parser vive en yt-local/app_parser.js (modulo UMD): el navegador lo
+      # carga como <script> y este test lo carga con require(). Mismo codigo,
+      # asi que el test protege de verdad la logica que usa la web.
+      - name: Test del parser de URLs
+        run: node yt-local/test_parser.js
+
+      - name: Verificar que la web carga el parser antes de app.js
+        run: node yt-local/browser_load_check.js .
+
+      - name: Sintaxis de los .js del frontend
         run: |
-          echo "test_parser.js NO se ejecuta en CI."
-          echo "Hace require de un helper (app_parser_test_helper.js) que no existe"
-          echo "en el repo; la funcion extraerID vive dentro de app.js y no se exporta."
-          echo "Dejarlo asi haria fallar el build sin avisar nada util."
+          node --check app.js
+          node --check api/cobalt.js
+          node --check yt-local/app_parser.js
+
+      - name: Verificar que app.js no duplique la logica del parser
+        run: |
+          if grep -q 'function extraerID' app.js; then
+            echo "::error::app.js vuelve a definir extraerID; debe usar el modulo compartido"
+            exit 1
+          fi
+          echo "OK: la fuente unica del parser es yt-local/app_parser.js"

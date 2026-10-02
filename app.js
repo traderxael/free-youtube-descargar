@@ -44,35 +44,10 @@ async function chequearServidor() {
   }
 }
 
-// --- Parser estricto: solo YouTube, ID de exactamente 11 chars ---
-function extraerID(raw) {
-  if (!raw) return null;
-  raw = raw.trim();
-  let u;
-  try { u = new URL(raw); } catch { 
-    // puede ser un ID pelado
-    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
-    return null;
-  }
-  const host = u.hostname.toLowerCase().replace(/^www\./, '');
-  const ytHosts = ['youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com', 'youtu.be'];
-  if (!ytHosts.includes(host)) return null;
-  let id = null;
-  if (host === 'youtu.be') {
-    id = u.pathname.split('/').filter(Boolean)[0] || null;
-  } else {
-    // /watch?v= | /shorts/ID | /embed/ID | /live/ID | music.youtube.com con ?v=
-    const v = u.searchParams.get('v');
-    if (v) id = v;
-    else {
-      const m = u.pathname.match(/^\/(shorts|embed|live)\/([A-Za-z0-9_-]+)/);
-      if (m) id = m[2];
-    }
-  }
-  // estricto: 11 chars, ni 6 ni 15
-  if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) return id;
-  return null;
-}
+// --- Parser: la implementacion vive en yt-local/app_parser.js ---
+// Ese modulo es UMD: el navegador lo carga como <script> (expone window.extraerID)
+// y el test lo carga con require(), de modo que ambos usan EXACTAMENTE el mismo codigo.
+// No duplicar la logica aqui o el test dejaria de proteger la app real.
 
 async function pegarPortapapeles() {
   try { $('url').value = await navigator.clipboard.readText(); cargar(); }
