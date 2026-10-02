@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests del servidor local
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # servidor.py solo usa la libreria estandar, asi que esto corre sin instalar nada.
+      - name: Test del handler _servir_archivo (Range / 206 / 416)
+        run: python yt-local/test_servidor.py
+
+      - name: Verificar sintaxis del servidor
+        run: python -m py_compile yt-local/servidor.py
+
+      - name: Nota sobre test_parser.js
+        run: |
+          echo "test_parser.js NO se ejecuta en CI."
+          echo "Hace require de un helper (app_parser_test_helper.js) que no existe"
+          echo "en el repo; la funcion extraerID vive dentro de app.js y no se exporta."
+          echo "Dejarlo asi haria fallar el build sin avisar nada util."
